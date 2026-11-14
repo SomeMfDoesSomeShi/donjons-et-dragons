@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111019">
+  <title>Chroniques — Jeu de rôle IA</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Chroniques"><span class="brand-mark">✦</span><span>CHRONIQUES</span></a>
+      <div class="top-actions">
+        <span id="saveStatus" class="status">Partie locale</span>
+        <button id="settingsBtn" class="icon-button" title="Paramètres" aria-label="Paramètres">⚙</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="setupScreen" class="screen">
+        <div class="hero">
+          <div class="eyebrow">UNE AVENTURE GÉNÉRÉE PAR IA</div>
+          <h1>Écrivez votre<br><em>propre légende.</em></h1>
+          <p>Un maître du jeu propulsé par Groq. Vos choix façonnent le monde, les dés décident du hasard.</p>
+        </div>
+
+        <div class="setup-grid">
+          <section class="panel setup-panel">
+            <div class="section-heading"><span class="step">01</span><div><h2>Votre groupe</h2><p>Créez les personnages : race, classe et description personnelle.</p></div></div>
+            <div id="playersSetup" class="players-setup"></div>
+            <button id="addPlayerBtn" class="button button-ghost">＋ Ajouter un joueur</button>
+          </section>
+
+          <section class="panel setup-panel">
+            <div class="section-heading"><span class="step">02</span><div><h2>L'ambiance</h2><p>Choisissez le style de votre aventure.</p></div></div>
+            <div class="field">
+              <label for="themeSelect">Style de campagne</label>
+              <select id="themeSelect">
+                <option value="fantasy">Fantasy épique — royaumes, magie et dragons</option>
+                <option value="dark">Fantasy mystérieuse — secrets et atmosphère sombre</option>
+                <option value="comedy">Fantasy décalée — humour et situations absurdes</option>
+                <option value="pirates">Pirates fantastiques — îles et trésors</option>
+                <option value="scifi">Science-fiction — exploration spatiale</option>
+                <option value="custom">Personnalisé</option>
+              </select>
+            </div>
+            <div class="field" id="customPromptField" hidden>
+              <label for="customPrompt">Décris l'ambiance souhaitée</label>
+              <textarea id="customPrompt" rows="3" placeholder="Ex. : aventure inspirée des contes nordiques, mystérieuse mais pleine d'espoir..."></textarea>
+            </div>
+            <div class="field">
+              <label for="campaignName">Nom de la campagne <span class="optional">facultatif</span></label>
+              <input id="campaignName" maxlength="50" placeholder="Les Chroniques oubliées">
+            </div>
+            <div class="note">Chaque joueur joue à tour de rôle sur cet appareil. La partie est sauvegardée dans ce navigateur.</div>
+            <button id="startBtn" class="button button-primary button-wide">Commencer l'aventure <span>→</span></button>
+          </section>
+        </div>
+      </section>
+
+      <section id="gameScreen" class="screen" hidden>
+        <div class="game-heading">
+          <div><div class="eyebrow" id="campaignEyebrow">CAMPAGNE EN COURS</div><h1 id="campaignTitle">Les Chroniques</h1></div>
+          <div class="round-pill">JOUR <b id="roundNumber">1</b></div>
+        </div>
+
+        <div class="game-layout">
+          <section class="main-column">
+            <article class="panel scene-panel">
+              <div class="scene-meta"><span class="live-dot"></span> <span id="locationLabel">Lieu inconnu</span><span class="scene-divider">/</span><span id="sceneStatus">Nouvelle scène</span></div>
+              <div id="storyText" class="story-text">Votre aventure vous attend...</div>
+              <div class="scene-image-wrap">
+                <div class="scene-image-stage">
+                  <img id="sceneImage" alt="Illustration de la scène actuelle" hidden>
+                  <div id="sceneImageStatus" class="scene-image-status">L'illustration de la scène apparaîtra ici.</div>
+                </div>
+                <button id="regenerateImageBtn" type="button" class="button button-ghost regenerate-image">↻ Régénérer l'illustration</button>
+              </div>
+              <div id="diceLog" class="dice-log" hidden></div>
+            </article>
+
+            <section class="panel decision-panel">
+              <div class="section-heading"><span class="step">✎</span><div><h2>À vous de jouer</h2><p>Chaque joueur écrit ce que son personnage tente de faire.</p></div></div>
+              <div id="decisions" class="decisions"></div>
+              <button id="resolveBtn" class="button button-primary button-wide">Résoudre le tour <span>✦</span></button>
+              <p class="small-hint">Vous pouvez laisser un joueur sans action. Décrivez une intention, pas besoin de connaître les règles.</p>
+            </section>
+
+            <section class="panel log-panel">
+              <div class="section-heading"><span class="step">≋</span><div><h2>Journal de l'aventure</h2><p>Les cinq derniers événements sont transmis au maître du jeu.</p></div></div>
+              <div id="historyList" class="history-list"></div>
+            </section>
+          </section>
+
+          <aside class="side-column">
+            <section class="panel party-panel">
+              <div class="side-title"><h2>Le groupe</h2><span id="partyCount" class="count-pill">0</span></div>
+              <div id="partyStats" class="party-stats"></div>
+            </section>
+            <section class="panel summary-panel">
+              <div class="side-title"><h2>Résumé</h2><span>✧</span></div>
+              <p id="summaryText">Votre histoire commence ici.</p>
+            </section>
+            <section class="panel inventory-panel">
+              <div class="side-title"><h2>Inventaires</h2><span>⌘</span></div>
+              <div id="inventories"></div>
+            </section>
+            <section class="panel controls-panel">
+              <button id="exportBtn" class="button button-ghost button-wide">Exporter la sauvegarde ↓</button>
+              <label class="button button-ghost button-wide import-label">Importer une sauvegarde ↑<input id="importInput" type="file" accept="application/json"></label>
+              <button id="newGameBtn" class="text-button">Nouvelle partie</button>
+            </section>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="settingsDialog" class="settings-dialog">
+    <form method="dialog" class="dialog-head"><div><div class="eyebrow">CONFIGURATION</div><h2>Connexion à Groq</h2></div><button class="icon-button" aria-label="Fermer">✕</button></form>
+    <div class="field">
+      <label for="apiKey">Clé API Groq</label>
+      <input id="apiKey" type="password" autocomplete="off" placeholder="gsk_..." spellcheck="false">
+      <p class="field-help">Ta clé est conservée uniquement dans le stockage local de ce navigateur et envoyée directement à l'API Groq. Ne partage pas ton navigateur ou cette clé.</p>
+    </div>
+    <div class="field">
+      <label for="modelSelect">Modèle</label>
+      <select id="modelSelect">
+        <option value="openai/gpt-oss-20b">GPT-OSS 20B — recommandé</option>
+        <option value="openai/gpt-oss-120b">GPT-OSS 120B — plus puissant</option>
+        <option value="qwen/qwen3.8-27b">Qwen 3.8 27B</option>
+      </select>
+    </div>
+    <div class="field image-settings">
+      <label for="imageApiKey">Clé API Pollinations (facultatif)</label>
+      <input id="imageApiKey" type="password" autocomplete="off" placeholder="sk_..." spellcheck="false">
+      <p class="field-help">Crée une clé sur enter.pollinations.ai, puis colle-la ici. Le jeu l'enregistre uniquement dans le stockage local de ce navigateur. Une clé secrète reste accessible à toute personne ayant accès à ce navigateur : configure un budget limité dans ton compte.</p>
+      <p class="field-help">Sans clé, le jeu fonctionne normalement, mais les illustrations ne sont pas générées.</p>
+    </div>
+    <div class="dialog-actions settings-actions">
+      <button id="testKeyBtn" type="button" class="button button-ghost">Tester Groq</button>
+      <button id="testImageBtn" type="button" class="button button-ghost">Tester l'image</button>
+      <button id="saveSettingsBtn" type="button" class="button button-primary">Enregistrer</button>
+    </div>
+    <p id="settingsMessage" class="settings-message" role="status"></p>
+  </dialog>
+
+  <div id="busyOverlay" class="busy-overlay" hidden><div class="spinner"></div><strong id="busyText">Le maître du jeu réfléchit...</strong><span>Les dés ne vont pas tarder à rouler.</span></div>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
